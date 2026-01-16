@@ -1,0 +1,26 @@
+{
+  "name": "@naytak/calendar-core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic core engine for Naytak Calendar",
+  "license": "MIT",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --watch --format esm,cjs --dts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@naytak/calendar-system": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0",
+    "vitest": "^1.0.0"
+  }
+}
