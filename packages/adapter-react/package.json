@@ -1,7 +1,7 @@
 {
-  "name": "@naytak/adapter-react",
+  "name": "naytak-myanmar-react-calendar",
   "version": "0.1.0",
-  "description": "React adapter for Naytak Calendar Core",
+  "description": "React Calendar Component using Naytak Calendar Core",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,7 @@
     "start": "vite"
   },
   "dependencies": {
-    "@naytak/calendar-core": "0.1.0",
+    "naytak-calendar-core": "0.1.0",
     "@vitejs/plugin-react": "^5.1.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"

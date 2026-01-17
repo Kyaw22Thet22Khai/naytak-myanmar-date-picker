@@ -1,5 +1,5 @@
 {
-  "name": "@naytak/calendar-core",
+  "name": "naytak-calendar-core",
   "version": "0.1.0",
   "description": "Framework-agnostic core engine for Naytak Calendar",
   "license": "MIT",

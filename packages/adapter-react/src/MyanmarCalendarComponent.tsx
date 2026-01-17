@@ -1,33 +1,49 @@
-import React, { useMemo, useState } from "react";
+/**
+ * MyanmarCalendarComponent
+ *
+ * A reusable React calendar component for displaying Myanmar lunar dates.
+ *
+ * Props:
+ * - year?: number  // Gregorian year (optional, controlled)
+ * - month?: number // Gregorian month (1–12, optional, controlled)
+ * - onChange?: (date: Date) => void // Called when a date is selected
+ *
+ * Usage:
+ * import MyanmarCalendarComponent from "naytak-myanmar-react-calendar";
+ * <MyanmarCalendarComponent onChange={(date) => setDate(date)} />
+ */
 
-//CSS
+import React, { useMemo, useState, useEffect } from "react";
+
+// CSS
 import "./CSS/MyanmarCalendarComponent.css";
 
 // Calendar Core
-import { toMyanmarDate, gregorianToMyanmar } from "@naytak/calendar-core";
+import { toMyanmarDate, gregorianToMyanmar } from "naytak-calendar-core";
 
 /* ------------------------------------------------------------------ */
 /* Types */
 /* ------------------------------------------------------------------ */
 
 // Myanmar month names (Unicode)
-const MYANMAR_MONTHS = [
-  "ဝါဆို", // Waso
-  "တန်ခူး", // Tagu
-  "ကဆုန်", // Kason
-  "နယုန်", // Nayon
-  "ဒုတိယ ဝါဆို", // Second Waso
-  "ဝါခေါင်", // Wagaung
-  "တော်သလင်း", // Tawthalin
-  "သီတင်းကျွတ်", // Thadingyut
-  "တန်ဆောင်မုန်း", // Tazaungmon
-  "နတ်တော်", // Nadaw
-  "ပြာသို", // Pyatho
-  "တပို့တွဲ", // Tabodwe
-  "တပေါင်း", // Tabaung
-  "နောက်တန်ခူး", // Late Tagu
-  "နောက်ကဆုန်", // Late Kason
-];
+// Myanmar month names (English key, Unicode value)
+const MYANMAR_MONTHS: { [key: string]: string } = {
+  Waso: "ဝါဆို",
+  Tagu: "တန်ခူး",
+  Kason: "ကဆုန်",
+  Nayon: "နယုန်",
+  SecondWaso: "ဒုတိယ ဝါဆို",
+  Wagaung: "ဝါခေါင်",
+  Tawthalin: "တော်သလင်း",
+  Thadingyut: "သီတင်းကျွတ်",
+  Tazaungmon: "တန်ဆောင်မုန်း",
+  Nadaw: "နတ်တော်",
+  Pyatho: "ပြာသို",
+  Tabodwe: "တပို့တွဲ",
+  Tabaung: "တပေါင်း",
+  LateTagu: "နောက်တန်ခူး",
+  LateKason: "နောက်ကဆုန်",
+};
 
 const MYANMAR_PHASES: Record<string, string> = {
   Waxing: "လဆန်း",
@@ -48,6 +64,7 @@ type MyanmarLunarCompat = {
 export interface MyanmarCalendarComponentProps {
   year?: number;
   month?: number; // Gregorian month (1–12)
+  onChange?: (result: { gregorian: Date; myanmar: MyanmarLunarCompat }) => void; // Called when a date is selected
 }
 
 /* ------------------------------------------------------------------ */
@@ -69,7 +86,7 @@ function formatMyanmarDate(lunar: MyanmarLunarCompat): string {
   const showDay = lunar.phase === "Waxing" || lunar.phase === "Waning";
   return (
     `မြန်မာနှစ် ${toMyanmarNumber(lunar.myanmarYear)}၊ ${
-      MYANMAR_MONTHS[lunar.monthIndex]
+      MYANMAR_MONTHS[lunar.myanmarMonth]
     } ` +
     `${MYANMAR_PHASES[lunar.phase]}${
       showDay ? ` ${toMyanmarNumber(lunar.day)}` : ""
@@ -101,34 +118,32 @@ function mapCoreToCompat(date: Date): MyanmarLunarCompat {
   };
 }
 
-// Helper: get Myanmar date info from Gregorian year, month, day
-function getMyanmarDateFromGregorian(
-  year: number,
-  month: number,
-  day: number
-): MyanmarLunarCompat {
-  return mapCoreToCompat(new Date(year, month - 1, day));
-}
-
 /* ------------------------------------------------------------------ */
 /* Component */
 /* ------------------------------------------------------------------ */
 
-export const MyanmarCalendarComponent: React.FC<
-  MyanmarCalendarComponentProps
-> = ({ year, month }) => {
+const MyanmarCalendarComponent: React.FC<MyanmarCalendarComponentProps> = ({
+  year,
+  month,
+  onChange,
+}) => {
   const today = new Date();
 
-  /* -------------------- State -------------------- */
-
+  // State
   const [viewYear, setViewYear] = useState(year ?? today.getFullYear());
   const [viewMonth, setViewMonth] = useState(month ?? today.getMonth() + 1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [convertedMyanmar, setConvertedMyanmar] =
-    useState<MyanmarLunarCompat | null>(null);
   const todayLunar = mapCoreToCompat(today);
 
-  /* -------------------- Gregorian Grid -------------------- */
+  // Sync state with props if they change
+  useEffect(() => {
+    if (year !== undefined) setViewYear(year);
+  }, [year]);
+  useEffect(() => {
+    if (month !== undefined) setViewMonth(month);
+  }, [month]);
+
+  // Gregorian Grid
   const weeks = useMemo(() => {
     const firstDay = getFirstDayOfWeek(viewYear, viewMonth);
     const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
@@ -147,9 +162,13 @@ export const MyanmarCalendarComponent: React.FC<
     return rows;
   }, [viewYear, viewMonth]);
 
-  /* ------------------------------------------------------------------ */
-  /* Render */
-  /* ------------------------------------------------------------------ */
+  // Handle date selection
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    if (onChange) onChange({ gregorian: date, myanmar: mapCoreToCompat(date) });
+  };
+
+  // Render
   return (
     <div className="myanmar-calendar-root">
       {/* Gregorian Filters */}
@@ -164,8 +183,8 @@ export const MyanmarCalendarComponent: React.FC<
               new Date(
                 y,
                 viewMonth - 1,
-                selectedDate ? selectedDate.getDate() : 1
-              )
+                selectedDate ? selectedDate.getDate() : 1,
+              ),
             );
           }}
           className="myanmar-calendar-select">
@@ -174,7 +193,7 @@ export const MyanmarCalendarComponent: React.FC<
               <option key={y} value={y}>
                 {y}
               </option>
-            )
+            ),
           )}
         </select>
 
@@ -188,8 +207,8 @@ export const MyanmarCalendarComponent: React.FC<
               new Date(
                 viewYear,
                 m - 1,
-                selectedDate ? selectedDate.getDate() : 1
-              )
+                selectedDate ? selectedDate.getDate() : 1,
+              ),
             );
           }}
           className="myanmar-calendar-select">
@@ -205,12 +224,18 @@ export const MyanmarCalendarComponent: React.FC<
           value={selectedDate ? selectedDate.getDate() : 1}
           onChange={(e) => {
             const d = +e.target.value;
-            setSelectedDate(new Date(viewYear, viewMonth - 1, d));
+            const newDate = new Date(viewYear, viewMonth - 1, d);
+            setSelectedDate(newDate);
+            if (onChange)
+              onChange({
+                gregorian: newDate,
+                myanmar: mapCoreToCompat(newDate),
+              });
           }}
           className="myanmar-calendar-select">
           {Array.from(
             { length: new Date(viewYear, viewMonth, 0).getDate() },
-            (_, i) => i + 1
+            (_, i) => i + 1,
           ).map((d) => (
             <option key={d} value={d}>
               {d}
@@ -262,14 +287,14 @@ export const MyanmarCalendarComponent: React.FC<
                 return (
                   <td
                     key={j}
-                    onClick={() => setSelectedDate(date)}
+                    onClick={() => handleDateSelect(date)}
                     className={tdClass}
                     title={formatMyanmarDate(lunar)}>
                     <div className="myanmar-calendar-date">
                       {date.getDate()}
                     </div>
                     <div className="myanmar-calendar-lunar">
-                      {MYANMAR_MONTHS[lunar.monthIndex]}{" "}
+                      {MYANMAR_MONTHS[lunar.myanmarMonth]}{" "}
                       {MYANMAR_PHASES[lunar.phase]}{" "}
                       {lunar.phase === "Waxing" || lunar.phase === "Waning"
                         ? toMyanmarNumber(lunar.day)
@@ -295,3 +320,6 @@ export const MyanmarCalendarComponent: React.FC<
     </div>
   );
 };
+
+// Export as named export for easier named import in other projects
+export { MyanmarCalendarComponent };
